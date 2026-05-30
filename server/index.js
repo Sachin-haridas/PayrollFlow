@@ -15,6 +15,7 @@ app.use(cors({
   origin: '*'
 }))
 app.use(express.json());
+app.get("/ping", (req, res) => res.json({ message: "pong", cors: "enabled" }))
 
 // Routes
 app.use("/api/employees", require("./routes/employees"));
