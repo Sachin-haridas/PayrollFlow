@@ -12,9 +12,7 @@ const app = express();
 
 // Middleware
 app.use(cors({
-  origin: 'https://payroll-flow-seven.vercel.app',
-  methods: ['GET', 'POST', 'PUT', 'DELETE'],
-  credentials: true
+  origin: '*'
 }))
 app.use(express.json());
 
