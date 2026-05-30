@@ -10,6 +10,15 @@ dotenv.config();
 
 const app = express();
 
+const fs = require("fs");
+const path = require("path");
+
+// Auto-create required folders if they don't exist
+const uploadsDir = path.join(__dirname, "uploads");
+const slipsDir   = path.join(__dirname, "slips");
+if (!fs.existsSync(uploadsDir)) fs.mkdirSync(uploadsDir);
+if (!fs.existsSync(slipsDir))   fs.mkdirSync(slipsDir);
+
 // Middleware
 app.use(cors({
   origin: '*'
