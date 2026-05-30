@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react'
 import axios from 'axios'
-
-const BASE = 'http://localhost:5000/api'
+import BASE from '../config/api'
 
 export default function SendSlips() {
   const [months, setMonths] = useState([])

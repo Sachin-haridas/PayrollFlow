@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react'
 import axios from 'axios'
-
-const BASE = 'http://localhost:5000/api'
+import BASE from '../config/api'
 
 function StatCard({ label, value, icon, iconBg, valueColor, sub }) {
   return (

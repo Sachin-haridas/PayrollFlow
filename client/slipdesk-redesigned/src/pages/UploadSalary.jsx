@@ -1,7 +1,6 @@
 import { useState, useRef } from 'react'
 import axios from 'axios'
-
-const BASE = 'http://localhost:5000/api'
+import BASE from '../config/api'
 const fmt = n => `₹${Number(n).toLocaleString('en-IN')}`
 
 export default function UploadSalary() {
