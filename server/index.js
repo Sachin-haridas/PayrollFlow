@@ -1,6 +1,8 @@
 // ==========================
 // index.js — Server Entry Point
 // ==========================
+const dns = require("dns");
+dns.setDefaultResultOrder("ipv4first");
 const express = require("express");
 const mongoose = require("mongoose");
 const dotenv = require("dotenv");
