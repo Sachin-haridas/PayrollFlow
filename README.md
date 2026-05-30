@@ -4,6 +4,16 @@
 
 ---
 
+## 🔗 Live URLs
+
+| Service | URL |
+|---|---|
+| Frontend | https://payroll-flow-seven.vercel.app |
+| Backend API | https://payrollflow-q1ha.onrender.com |
+| Database | MongoDB Atlas (cloud hosted) |
+
+---
+
 ## 📌 Table of Contents
 
 - [Overview](#overview)
@@ -12,10 +22,11 @@
 - [How It Works](#how-it-works)
 - [Getting Started](#getting-started)
 - [Environment Variables](#environment-variables)
-- [Gmail SMTP Setup](#gmail-smtp-setup)
+- [Email Setup — Resend](#email-setup--resend)
 - [Sample Data](#sample-data)
 - [API Endpoints](#api-endpoints)
-- [Features](#features)
+- [Deployment](#deployment)
+- [Known Issues & Fixes](#known-issues--fixes)
 
 ---
 
@@ -37,13 +48,14 @@ Employees **do not need to log in** — they simply receive their salary slip as
 |---|---|
 | Frontend | React + Tailwind CSS |
 | Backend | Node.js + Express |
-| Database | MongoDB (Mongoose) |
+| Database | MongoDB Atlas (cloud) |
 | PDF Generation | pdfkit |
-| Email Dispatch | Nodemailer + Gmail SMTP |
+| Email Dispatch | Resend HTTP API |
 | File Parsing | xlsx (SheetJS) |
 | File Upload | Multer |
-| Deployment (Frontend) | Vercel |
-| Deployment (Backend) | Render / Railway |
+| Frontend Deploy | Vercel |
+| Backend Deploy | Render |
+
 
 ---
 
@@ -52,16 +64,19 @@ Employees **do not need to log in** — they simply receive their salary slip as
 ```
 project/
 ├── client/                        # React Frontend
-│   ├── pages/
-│   │   ├── Login.jsx              # Admin login page
-│   │   ├── Dashboard.jsx          # Main dashboard
-│   │   ├── UploadEmployees.jsx    # Step 1 — Upload employee master
-│   │   ├── UploadSalary.jsx       # Step 2 — Upload monthly salary CSV
-│   │   └── SendSlips.jsx          # Step 3 — Send salary slips
-│   └── components/
-│       ├── PreviewTable.jsx       # Data preview before sending
-│       ├── StatusTable.jsx        # Post-send status report
-│       └── Navbar.jsx
+│   ├── src/
+│   │   ├── config/
+│   │   │   └── api.js             # Centralized API base URL
+│   │   ├── pages/
+│   │   │   ├── Login.jsx
+│   │   │   ├── Dashboard.jsx
+│   │   │   ├── UploadEmployees.jsx  # Step 1
+│   │   │   ├── UploadSalary.jsx     # Step 2
+│   │   │   └── SendSlips.jsx        # Step 3
+│   │   └── components/
+│   ├── .env.development           # http://localhost:5000/api
+│   ├── .env.production            # https://payrollflow-q1ha.onrender.com/api
+│   └── vercel.json
 │
 ├── server/                        # Node.js / Express Backend
 │   ├── index.js                   # Entry point
@@ -77,11 +92,11 @@ project/
 │   ├── middleware/
 │   │   └── upload.js              # Multer config
 │   ├── utils/
-│   │   ├── pdfGenerator.js        # PDF generation via pdfkit
-│   │   └── emailSender.js         # Email dispatch via Nodemailer
-│   ├── uploads/                   # Temp folder for uploaded files
-│   ├── slips/                     # Temp folder for generated PDFs
-│   └── .env                       # Environment variables (never commit this!)
+│   │   ├── pdfGenerator.js        # PDF via pdfkit
+│   │   └── emailSender.js         # Email via Resend
+│   ├── uploads/                   # Auto-created on startup
+│   ├── slips/                     # Auto-created on startup
+│   └── .env
 │
 └── README.md
 ```
@@ -95,7 +110,7 @@ project/
 ```
 STEP 1 — One Time Setup
 Admin uploads Employee Master CSV
-→ Saved permanently to MongoDB
+→ Saved permanently to MongoDB Atlas
 
 ────────────────────────────────────────
 
@@ -110,11 +125,11 @@ Admin uploads Monthly Salary CSV
 ────────────────────────────────────────
 
 STEP 3 — Send Slips
-Admin selects month from dropdown (auto-populated)
+Admin selects month from dropdown (auto-populated from DB)
 → Clicks "Send All Slips"
 → Backend generates individual PDF per employee
-→ PDF emailed to each employee's registered email
-→ Admin sees a success/failure report per employee
+→ PDF emailed via Resend to each employee
+→ Admin sees success/failure report per employee
 ```
 
 ### Net Salary Formula
@@ -130,14 +145,14 @@ Net Salary = (Base Salary + HRA + Allowances) - Deductions
 ### Prerequisites
 
 - Node.js v18+
-- MongoDB Atlas account (free tier works)
-- Gmail account with 2FA enabled
+- MongoDB Atlas account (free tier)
+- Resend account (free tier — 3000 emails/month)
 
 ### 1. Clone the Repository
 
 ```bash
-git clone https://github.com/your-username/salary-slip-automation.git
-cd salary-slip-automation
+git clone https://github.com/Sachin-haridas/PayrollFlow.git
+cd PayrollFlow
 ```
 
 ### 2. Setup the Backend
@@ -147,17 +162,11 @@ cd server
 npm install
 ```
 
-Create your `.env` file (see [Environment Variables](#environment-variables) below):
+Create your `.env` file:
 
 ```bash
 cp .env.example .env
 # Fill in your values
-```
-
-Create the required temp folders:
-
-```bash
-mkdir uploads slips
 ```
 
 Start the server:
@@ -180,15 +189,14 @@ npm run dev
 
 ## Environment Variables
 
-Create a file called `.env` inside the `server/` folder:
+Create a `.env` file inside the `server/` folder:
 
 ```env
-# MongoDB connection string from MongoDB Atlas
+# MongoDB Atlas connection string
 MONGO_URI=mongodb+srv://<username>:<password>@cluster0.xxxxx.mongodb.net/salarydb
 
-# Gmail credentials for sending emails
-GMAIL_USER=youremail@gmail.com
-GMAIL_PASS=xxxx xxxx xxxx xxxx
+# Resend API key for email delivery
+RESEND_API_KEY=re_xxxxxxxxxxxxxxxxxxxx
 
 # Server port
 PORT=5000
@@ -198,31 +206,25 @@ PORT=5000
 
 ---
 
-## Gmail SMTP Setup
+## Email Setup — Resend
 
-The app uses **Nodemailer with Gmail SMTP** to send salary slip emails. You cannot use your regular Gmail password — you must generate an **App Password**.
+The app uses **Resend HTTP API** to send salary slip emails. It works on all hosting platforms including Render's free tier.
 
 ### Step-by-step:
 
-1. Go to your [Google Account](https://myaccount.google.com)
-2. Navigate to **Security**
-3. Make sure **2-Step Verification** is turned ON
-4. In the search bar at the top, search **"App Passwords"**
-5. Under App name, type anything (e.g. `salary app`)
-6. Click **Create**
-7. Google will show a **16-character password** like `abcd efgh ijkl mnop`
-8. Copy that and paste it as `GMAIL_PASS` in your `.env`
+1. Go to [resend.com](https://resend.com) → Sign up free (use GitHub)
+2. Click **API Keys** on the left sidebar
+3. Click **Create API Key** → give it any name → copy the key
+4. Add it to your `.env` as `RESEND_API_KEY`
+5. On Render → Environment Variables → add `RESEND_API_KEY`
 
-```env
-GMAIL_USER=yourname@gmail.com
-GMAIL_PASS=abcd efgh ijkl mnop
-```
-
-> ✅ The app will send emails **from** your Gmail address to each employee's registered email.
+> ✅ Free tier: 3000 emails/month, 100/day
+> ✅ No domain verification needed for testing
+> ✅ Can send to any email address
 
 ### Testing Emails
 
-To test without sending to real employees, put **your own email address** in the `email` column of the Employee Master CSV for all employees. All salary slips will then be delivered to your inbox so you can verify the PDF and email template look correct.
+To test, put your own email in the `email` column of the Employee Master CSV. All salary slips will be delivered to your inbox so you can verify the PDF and email template.
 
 ---
 
@@ -230,52 +232,42 @@ To test without sending to real employees, put **your own email address** in the
 
 ### Employee Master CSV (one-time upload)
 
-Save this as `employee_master.csv`:
+Save as `employee_master.csv`:
 
 ```
 emp_id,name,email,designation
-EMP001,Arun Kumar,arun.kumar@gmail.com,Software Engineer
-EMP002,Priya Nair,priya.nair@gmail.com,UI Designer
-EMP003,Rahul Menon,rahul.menon@gmail.com,Backend Developer
-EMP004,Sneha Das,sneha.das@gmail.com,QA Engineer
-EMP005,Vikram Iyer,vikram.iyer@gmail.com,Product Manager
+EMP001,Arun Kumar,your_email@gmail.com,Software Engineer
+EMP002,Priya Nair,your_email@gmail.com,UI Designer
+EMP003,Rahul Menon,your_email@gmail.com,Backend Developer
+EMP004,Sneha Das,your_email@gmail.com,QA Engineer
+EMP005,Vikram Iyer,your_email@gmail.com,Product Manager
 ```
 
-> 💡 **For testing:** Replace the email values above with your own email address so all slips land in your inbox.
-
-```
-emp_id,name,email,designation
-EMP001,Arun Kumar,YOUR_EMAIL@gmail.com,Software Engineer
-EMP002,Priya Nair,YOUR_EMAIL@gmail.com,UI Designer
-EMP003,Rahul Menon,YOUR_EMAIL@gmail.com,Backend Developer
-```
+> 💡 Replace `your_email@gmail.com` with any real email to receive test slips.
 
 ---
 
 ### Monthly Salary CSV (upload every month)
 
-Save this as `salary_august_2026.csv`:
+Save as `salary_february_2027.csv`:
 
 ```
 emp_id,base_salary,hra,allowances,deductions,month_year
-EMP001,50000,10000,5000,3000,August 2026
-EMP002,45000,9000,4000,2500,August 2026
-EMP003,55000,11000,6000,4000,August 2026
-EMP004,40000,8000,3500,2000,August 2026
-EMP005,70000,14000,8000,5000,August 2026
+EMP001,50000,10000,5000,3000,February 2027
+EMP002,45000,9000,4000,2500,February 2027
+EMP003,55000,11000,6000,4000,February 2027
+EMP004,40000,8000,3500,2000,February 2027
+EMP005,70000,14000,8000,5000,February 2027
 ```
 
-> ⚠️ **Important notes about the CSV:**
-> - `emp_id` values must exactly match what was uploaded in the Employee Master
-> - `month_year` must be in plain text format: `August 2026`, `May 2026` etc.
-> - If you're using Excel and the `month_year` column auto-formats as a date (showing as `aug-26` or a number), the backend will handle the conversion automatically
-> - Do not leave `month_year` blank — every row must have it
+> ⚠️ `month_year` must be plain text like `February 2027`.
+> If you use Excel and it auto-formats as a date, the backend handles the conversion automatically.
 
 ---
 
-### Net Salary Calculations for Sample Data
+### Net Salary Calculations
 
-| Employee | Base | HRA | Allowances | Deductions | **Net** |
+| Employee | Base | HRA | Allowances | Deductions | Net |
 |---|---|---|---|---|---|
 | EMP001 | 50,000 | 10,000 | 5,000 | 3,000 | **62,000** |
 | EMP002 | 45,000 | 9,000 | 4,000 | 2,500 | **55,500** |
@@ -292,7 +284,7 @@ EMP005,70000,14000,8000,5000,August 2026
 | Method | Endpoint | Description |
 |---|---|---|
 | GET | `/api/employees` | Get all employees |
-| POST | `/api/employees/add` | Add single employee manually |
+| POST | `/api/employees/add` | Add single employee |
 | POST | `/api/employees/upload` | Upload employee master CSV |
 
 ### Salary Routes
@@ -305,27 +297,51 @@ EMP005,70000,14000,8000,5000,August 2026
 
 ---
 
-## Features
+## Deployment
 
-- ✅ CSV/Excel upload for both employee master and monthly salary data
-- ✅ Auto-detection and conversion of Excel date formats (`aug-26`, serial numbers)
-- ✅ Net salary auto-calculated on backend
-- ✅ Duplicate entry prevention (same employee + same month)
-- ✅ Preview table before sending slips
-- ✅ Professional PDF salary slip generated per employee
-- ✅ HTML email with salary breakdown sent to each employee
-- ✅ Per-employee send status report (success / failure)
-- ✅ Responsive UI (mobile + desktop)
+### Frontend → Vercel
+
+```bash
+# In Vercel project settings → Environment Variables
+VITE_API_URL = https://payrollflow-q1ha.onrender.com/api
+```
+
+### Backend → Render
+
+```
+Root Directory:  server
+Build Command:   npm install
+Start Command:   node index.js
+
+Environment Variables:
+MONGO_URI       = your atlas uri
+RESEND_API_KEY  = your resend key
+PORT            = 5000
+```
+
+### Database → MongoDB Atlas
+
+MongoDB Atlas is fully cloud hosted — no deployment needed. Just create a free cluster, whitelist all IPs (`0.0.0.0/0`), and paste the connection string as `MONGO_URI`.
 
 ---
 
-## Important Notes
+## Known Issues & Fixes
 
-- Make sure `server/uploads/` and `server/slips/` folders exist before running the server
-- Employee Master only needs to be uploaded once — re-uploading will update existing records
-- Monthly salary CSV must be uploaded before attempting to send slips
-- PDFs are automatically deleted from the server after being emailed
-- All amounts are in Indian Rupees (₹)
+### 1. Render free tier blocks SMTP
+**Problem:** Nodemailer stopped working on Render after September 26th, 2025 — Render blocked all outbound SMTP ports on free tier.
+**Fix:** Switched to Resend HTTP API which bypasses SMTP entirely.
+
+### 2. Excel date serial numbers
+**Problem:** Excel converts `August 2026` typed in a date-formatted cell to a serial number like `46235`.
+**Fix:** `parseMonthYear()` function in `salaryController.js` detects and converts serial numbers and short formats like `aug-26` to `August 2026`.
+
+### 3. Render cold starts
+**Problem:** Render free tier spins down after 15 mins of inactivity. First request takes 30-50 seconds.
+**Fix:** Just wait and retry — it wakes up automatically.
+
+### 4. uploads/ and slips/ folders
+**Problem:** These folders don't exist on fresh Render deploys causing file upload errors.
+**Fix:** `index.js` auto-creates both folders on server startup using `fs.mkdirSync`.
 
 ---
 
