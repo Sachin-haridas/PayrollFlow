@@ -56,9 +56,6 @@ Employees **do not need to log in** — they simply receive their salary slip as
 | Frontend Deploy | Vercel |
 | Backend Deploy | Render |
 
-
----
-
 ## Project Structure
 
 ```
@@ -346,3 +343,62 @@ MongoDB Atlas is fully cloud hosted — no deployment needed. Just create a free
 ---
 
 *Built for Nippon Toyota Internship — Task 1: Employee Salary Slip Automation System*
+
+---
+
+## 🧪 Evaluator Testing Guide
+
+> No login required — the app opens directly to the dashboard.
+
+### Step 1 — Prepare Employee Master CSV
+
+Create a new file called `employee_master.csv` and paste this data into it.
+**Replace `your_email@gmail.com` with your own email address** on all rows so you receive the salary slips.
+
+```csv
+emp_id,name,email,designation
+EMP001,Arun Kumar,your_email@gmail.com,Software Engineer
+EMP002,Priya Nair,your_email@gmail.com,UI Designer
+EMP003,Rahul Menon,your_email@gmail.com,Backend Developer
+EMP004,Sneha Das,your_email@gmail.com,QA Engineer
+EMP005,Vikram Iyer,your_email@gmail.com,Product Manager
+```
+
+---
+
+### Step 2 — Prepare Monthly Salary CSV
+
+Create a new file called `salary_february_2027.csv` and paste this data into it. No changes needed here.
+
+```csv
+emp_id,base_salary,hra,allowances,deductions,month_year
+EMP001,50000,10000,5000,3000,February 2027
+EMP002,45000,9000,4000,2500,February 2027
+EMP003,55000,11000,6000,4000,February 2027
+EMP004,40000,8000,3500,2000,February 2027
+EMP005,70000,14000,8000,5000,February 2027
+```
+
+---
+
+### Step 3 — Run the Full Flow
+
+1. Open **https://payroll-flow-seven.vercel.app**
+2. Go to **Upload Employees** → upload `employee_master.csv`
+3. Go to **Upload Salary** → upload `salary_february_2027.csv`
+4. Go to **Send Slips** → select **February 2027** from the dropdown → click **Send All Slips**
+5. Check your inbox — you should receive **5 emails** with PDF salary slip attachments ✅
+
+---
+
+### Expected Result
+
+| Employee | Net Salary |
+|---|---|
+| EMP001 — Arun Kumar | ₹ 62,000 |
+| EMP002 — Priya Nair | ₹ 55,500 |
+| EMP003 — Rahul Menon | ₹ 68,000 |
+| EMP004 — Sneha Das | ₹ 49,500 |
+| EMP005 — Vikram Iyer | ₹ 87,000 |
+
+> 💡 The first request may take 30–50 seconds if the server is waking up from idle (Render free tier). Just wait and retry.
