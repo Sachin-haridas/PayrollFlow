@@ -66,12 +66,12 @@ const employeeSchema = new mongoose.Schema(
       required: [true, "Designation is required"],
       trim: true,
     },
-    department: {           // ← NEW
+    department: {           
       type: String,
       trim: true,
       default: "",
     },
-    joining_date: {         // ← NEW
+    joining_date: {         
       type: String,
       trim: true,
       default: "",
